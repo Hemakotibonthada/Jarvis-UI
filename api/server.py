@@ -103,6 +103,9 @@ from modules.color_tools import color_operation as color_tool_operation
 from modules.data_generator import datagen_operation
 from modules.live_vision import live_vision
 from modules.streaming import streaming_processor
+from modules.ollama_llm import list_ollama_models
+from modules.gmail_agent import gmail_operation
+from modules.activity_tracker import activity_tracker
 
 LoggerFactory.initialize()
 log = get_logger("server")
@@ -122,12 +125,17 @@ app.mount("/static", StaticFiles(directory="ui"), name="static")
 
 @app.on_event("startup")
 async def on_startup():
-    """Auto-start the wake word listener when Jarvis boots."""
+    """Auto-start wake word listener and activity tracking."""
     try:
         result = start_wake_listener()
         log.info(f"Auto-start wake listener: {result}")
     except Exception as e:
         log.warning(f"Could not auto-start wake listener: {e}")
+    try:
+        result = activity_tracker.start_tracking(60)
+        log.info(f"Auto-start activity tracking: {result}")
+    except Exception as e:
+        log.warning(f"Could not auto-start activity tracking: {e}")
 
 
 # ─── Core Components ─────────────────────────────────────────
@@ -378,6 +386,15 @@ brain.register_tool("live_vision", live_vision.vision_operation)
 
 # Streaming Processor
 streaming_processor.set_brain(brain, None)  # broadcast set after definition
+
+# Gmail
+brain.register_tool("gmail_operation", gmail_operation)
+
+# Activity Tracker
+brain.register_tool("activity_operation", activity_tracker.activity_operation)
+
+# Ollama
+brain.register_tool("list_ollama_models", list_ollama_models)
 
 # ── Final tool count ──────────────────────────────────────────
 log.info(f"J.A.R.V.I.S. fully loaded with {len(brain.tool_handlers)} tools across {80}+ modules")

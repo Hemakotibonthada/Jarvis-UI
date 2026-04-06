@@ -460,6 +460,24 @@ class JarvisBrain:
             if "401" in result or "invalid_api_key" in result or "Incorrect API key" in result:
                 _openai_failed_permanently = True
 
+        # ─── Try local Ollama LLM as second fallback ──────────
+        try:
+            from modules.ollama_llm import ask_ollama, is_ollama_available
+            if await is_ollama_available():
+                ollama_reply = await ask_ollama(
+                    user_input,
+                    system_prompt=("You are J.A.R.V.I.S., a helpful AI assistant. "
+                                   "Be concise, witty, and helpful. Current time: "
+                                   + datetime.now().strftime('%Y-%m-%d %H:%M')),
+                )
+                if ollama_reply and not ollama_reply.startswith("Ollama error"):
+                    self.memory.add("assistant", ollama_reply)
+                    self.persistent.log_exchange(user_input, ollama_reply)
+                    self._thinking = False
+                    return ollama_reply
+        except Exception:
+            pass
+
         # ─── Offline fallback — local command matching ────────
         result = await self._think_offline(user_input, broadcast)
         self.memory.add("assistant", result)
@@ -650,6 +668,19 @@ class JarvisBrain:
             # Expenses
             (r'\bspent\s+\$?(\d+\.?\d*)\s+on\s+(.+)', 'expense_operation', lambda m: {"operation": "add", "amount": float(m.group(1)), "description": m.group(2).strip()}),
 
+            # Activity tracking
+            (r'\bwhat did I do today\b|today.?s activity\b', 'activity_operation', {"operation": "today"}),
+            (r'\bapp\s+usage\b|my app\s+stats\b', 'activity_operation', {"operation": "apps"}),
+            (r'\bstart\s+tracking\b|track\s+activity\b', 'activity_operation', {"operation": "start"}),
+
+            # Gmail
+            (r'\b(check|read)\s+(my\s+)?gmail\b', 'gmail_operation', {"operation": "check"}),
+            (r'\bsummarize\s+(my\s+)?gmail\b|gmail\s+summary\b', 'gmail_operation', {"operation": "summarize"}),
+            (r'\bgmail\s+setup\b', 'gmail_operation', {"operation": "setup"}),
+
+            # Ollama/local LLM
+            (r'\b(ollama|local)\s+models?\b|list\s+ollama\b', '_ollama_models', {}),
+
             # System optimizer
             (r'\bhealth\s+score\b|system\s+health\b', 'optimizer_operation', {"operation": "health_score"}),
             (r'\bclean\s*(up)?\s*(disk|temp|junk)\b', 'optimizer_operation', {"operation": "cleanup"}),
@@ -726,6 +757,12 @@ class JarvisBrain:
                     return self._switch_language("en")
                 if tool_name == '_thanks':
                     return "మీకు స్వాగతం! (You're welcome!) I'm always here to help."
+                if tool_name == '_ollama_models':
+                    try:
+                        from modules.ollama_llm import list_ollama_models
+                        return asyncio.get_event_loop().run_until_complete(list_ollama_models())
+                    except Exception:
+                        return "Ollama not available."
 
                 # Build args
                 if callable(args_or_fn):
