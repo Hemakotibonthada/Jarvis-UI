@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S. — Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --primary-dim: #0099cc;
+            --secondary: #00ff88;
+            --warning: #ffaa00;
+            --danger: #ff3355;
+            --bg-dark: #0a0e17;
+            --bg-card: rgba(10, 20, 40, 0.85);
+            --text: #c0d8f0;
+            --text-bright: #e0f0ff;
+            --glow: 0 0 20px rgba(0, 212, 255, 0.3);
+            --font-hud: 'Orbitron', monospace;
+            --font-body: 'Rajdhani', 'Segoe UI', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid rgba(0,212,255,0.15);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .dash-header h1 {
+            font-family: var(--font-hud);
+            font-size: 20px;
+            color: var(--primary);
+            letter-spacing: 3px;
+        }
+
+        .dash-header a {
+            color: var(--primary-dim);
+            text-decoration: none;
+            font-family: var(--font-hud);
+            font-size: 12px;
+            border: 1px solid rgba(0,212,255,0.2);
+            padding: 6px 14px;
+            border-radius: 6px;
+            transition: all 0.2s;
+        }
+
+        .dash-header a:hover {
+            background: rgba(0,212,255,0.1);
+            color: var(--primary);
+        }
+
+        .dash-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid rgba(0,212,255,0.12);
+            border-radius: 12px;
+            padding: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .card:hover {
+            border-color: rgba(0,212,255,0.3);
+        }
+
+        .card-header {
+            font-family: var(--font-hud);
+            font-size: 11px;
+            color: var(--primary-dim);
+            letter-spacing: 2px;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0,212,255,0.1);
+            text-transform: uppercase;
+        }
+
+        /* Gauge */
+        .gauge-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .gauge-label {
+            font-family: var(--font-hud);
+            font-size: 10px;
+            color: var(--primary-dim);
+            width: 40px;
+            letter-spacing: 1px;
+        }
+
+        .gauge-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(0,212,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 1s ease, background 1s;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .gauge-fill.warn {
+            background: linear-gradient(90deg, var(--warning), var(--danger));
+        }
+
+        .gauge-value {
+            font-family: var(--font-hud);
+            font-size: 12px;
+            width: 45px;
+            text-align: right;
+        }
+
+        /* Stat Grid */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 12px;
+            background: rgba(0,212,255,0.03);
+            border-radius: 8px;
+            border: 1px solid rgba(0,212,255,0.08);
+        }
+
+        .stat-box .stat-number {
+            font-family: var(--font-hud);
+            font-size: 24px;
+            color: var(--primary);
+            text-shadow: var(--glow);
+        }
+
+        .stat-box .stat-label {
+            font-size: 11px;
+            color: var(--primary-dim);
+            margin-top: 4px;
+            letter-spacing: 1px;
+        }
+
+        /* Process List */
+        .process-list {
+            font-family: 'Consolas', monospace;
+            font-size: 11px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .process-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .process-name { color: var(--text); flex: 2; }
+        .process-cpu { color: var(--warning); width: 60px; text-align: right; }
+        .process-ram { color: var(--primary); width: 60px; text-align: right; }
+
+        /* Activity List */
+        .activity-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .activity-item {
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            font-size: 12px;
+        }
+
+        .activity-time {
+            color: var(--primary-dim);
+            font-size: 10px;
+            font-family: var(--font-hud);
+        }
+
+        .activity-tool {
+            color: var(--warning);
+            font-weight: bold;
+        }
+
+        /* Alerts */
+        .alert-item {
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            font-size: 12px;
+            border-left: 3px solid;
+        }
+
+        .alert-item.warn {
+            border-color: var(--warning);
+            background: rgba(255,170,0,0.05);
+        }
+
+        .alert-item.error {
+            border-color: var(--danger);
+            background: rgba(255,51,85,0.05);
+        }
+
+        .alert-item.info {
+            border-color: var(--primary);
+            background: rgba(0,212,255,0.05);
+        }
+
+        /* Task summary */
+        .task-summary {
+            white-space: pre-line;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* Network chart placeholder */
+        .mini-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 60px;
+            margin-top: 10px;
+        }
+
+        .mini-chart .bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--primary), transparent);
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: height 0.5s;
+        }
+
+        /* Clock */
+        .big-clock {
+            font-family: var(--font-hud);
+            font-size: 36px;
+            color: var(--primary);
+            text-shadow: var(--glow);
+            text-align: center;
+            letter-spacing: 4px;
+        }
+
+        .big-date {
+            text-align: center;
+            font-size: 14px;
+            color: var(--primary-dim);
+            margin-top: 4px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--primary-dim); border-radius: 2px; }
+
+        /* Wide card */
+        .card.wide {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 768px) {
+            .dash-grid { grid-template-columns: 1fr; }
+            .card.wide { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dash-header">
+        <h1>DASHBOARD</h1>
+        <div>
+            <a href="/">CHAT</a>
+        </div>
+    </div>
+
+    <div class="dash-grid">
+        <!-- Clock -->
+        <div class="card">
+            <div class="card-header">TIME</div>
+            <div id="big-clock" class="big-clock">00:00:00</div>
+            <div id="big-date" class="big-date"></div>
+        </div>
+
+        <!-- System Resources -->
+        <div class="card">
+            <div class="card-header">SYSTEM RESOURCES</div>
+            <div class="gauge-row">
+                <span class="gauge-label">CPU</span>
+                <div class="gauge-bar"><div id="d-cpu" class="gauge-fill" style="width:0%"></div></div>
+                <span id="d-cpu-v" class="gauge-value">--%</span>
+            </div>
+            <div class="gauge-row">
+                <span class="gauge-label">RAM</span>
+                <div class="gauge-bar"><div id="d-ram" class="gauge-fill" style="width:0%"></div></div>
+                <span id="d-ram-v" class="gauge-value">--%</span>
+            </div>
+            <div class="gauge-row">
+                <span class="gauge-label">DISK</span>
+                <div class="gauge-bar"><div id="d-disk" class="gauge-fill" style="width:0%"></div></div>
+                <span id="d-disk-v" class="gauge-value">--%</span>
+            </div>
+            <div id="battery-row" class="gauge-row" style="display:none">
+                <span class="gauge-label">BAT</span>
+                <div class="gauge-bar"><div id="d-bat" class="gauge-fill" style="width:0%"></div></div>
+                <span id="d-bat-v" class="gauge-value">--%</span>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card">
+            <div class="card-header">STATUS OVERVIEW</div>
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <div id="tool-count" class="stat-number">--</div>
+                    <div class="stat-label">TOOLS</div>
+                </div>
+                <div class="stat-box">
+                    <div id="uptime-val" class="stat-number">--</div>
+                    <div class="stat-label">UPTIME</div>
+                </div>
+                <div class="stat-box">
+                    <div id="task-count" class="stat-number">--</div>
+                    <div class="stat-label">TASKS</div>
+                </div>
+                <div class="stat-box">
+                    <div id="note-count" class="stat-number">--</div>
+                    <div class="stat-label">NOTES</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Network -->
+        <div class="card">
+            <div class="card-header">NETWORK I/O</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+                <span style="font-size:12px">↑ Sent: <span id="net-sent">--</span> MB</span>
+                <span style="font-size:12px">↓ Recv: <span id="net-recv">--</span> MB</span>
+            </div>
+            <div id="net-chart" class="mini-chart"></div>
+        </div>
+
+        <!-- Top Processes -->
+        <div class="card wide">
+            <div class="card-header">TOP PROCESSES</div>
+            <div id="process-list" class="process-list"></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">RECENT ACTIVITY</div>
+            <div id="activity-list" class="activity-list"></div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="card">
+            <div class="card-header">SYSTEM ALERTS</div>
+            <div id="alert-list">
+                <div class="alert-item info">All systems operational.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Clock ───────────────────────────────────────────
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('big-clock').textContent = now.toLocaleTimeString('en-US', { hour12: false });
+            document.getElementById('big-date').textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ─── Network Chart Data ──────────────────────────────
+        const netData = [];
+        const NET_CHART_BARS = 30;
+        for (let i = 0; i < NET_CHART_BARS; i++) netData.push(0);
+
+        function initNetChart() {
+            const chart = document.getElementById('net-chart');
+            chart.innerHTML = '';
+            for (let i = 0; i < NET_CHART_BARS; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = '2px';
+                chart.appendChild(bar);
+            }
+        }
+        initNetChart();
+
+        function updateNetChart(value) {
+            netData.push(value);
+            if (netData.length > NET_CHART_BARS) netData.shift();
+            const max = Math.max(...netData, 1);
+            const bars = document.getElementById('net-chart').children;
+            for (let i = 0; i < bars.length && i < netData.length; i++) {
+                const h = Math.max(2, (netData[i] / max) * 60);
+                bars[i].style.height = h + 'px';
+            }
+        }
+
+        // ─── Fetch System Stats ──────────────────────────────
+        let lastNetSent = 0;
+        async function fetchStats() {
+            try {
+                const resp = await fetch('/api/stats');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    
+                    const setCpuGauge = (val) => {
+                        document.getElementById('d-cpu').style.width = val + '%';
+                        document.getElementById('d-cpu').className = 'gauge-fill' + (val > 80 ? ' warn' : '');
+                        document.getElementById('d-cpu-v').textContent = Math.round(val) + '%';
+                    };
+                    const setRamGauge = (val) => {
+                        document.getElementById('d-ram').style.width = val + '%';
+                        document.getElementById('d-ram').className = 'gauge-fill' + (val > 85 ? ' warn' : '');
+                        document.getElementById('d-ram-v').textContent = Math.round(val) + '%';
+                    };
+                    const setDiskGauge = (val) => {
+                        document.getElementById('d-disk').style.width = val + '%';
+                        document.getElementById('d-disk').className = 'gauge-fill' + (val > 90 ? ' warn' : '');
+                        document.getElementById('d-disk-v').textContent = Math.round(val) + '%';
+                    };
+
+                    setCpuGauge(data.cpu);
+                    setRamGauge(data.ram);
+                    setDiskGauge(data.disk);
+
+                    // Network chart
+                    if (data.net_sent_mb && lastNetSent) {
+                        const delta = data.net_sent_mb - lastNetSent;
+                        updateNetChart(Math.abs(delta) * 100);
+                    }
+                    lastNetSent = data.net_sent_mb || 0;
+                    document.getElementById('net-sent').textContent = data.net_sent_mb || '--';
+                    document.getElementById('net-recv').textContent = data.net_recv_mb || '--';
+                }
+            } catch (e) {}
+        }
+
+        // ─── Fetch Extended Info ─────────────────────────────
+        async function fetchExtendedInfo() {
+            try {
+                // Tools
+                const toolResp = await fetch('/api/tools');
+                if (toolResp.ok) {
+                    const { count } = await toolResp.json();
+                    document.getElementById('tool-count').textContent = count;
+                }
+
+                // Activity
+                const actResp = await fetch('/api/activity');
+                if (actResp.ok) {
+                    const { recent } = await actResp.json();
+                    const list = document.getElementById('activity-list');
+                    list.innerHTML = '';
+                    (recent || []).slice(-15).reverse().forEach(entry => {
+                        const div = document.createElement('div');
+                        div.className = 'activity-item';
+                        const time = entry.timestamp ? entry.timestamp.substring(11, 19) : '';
+                        const tool = entry.tool || entry.event || entry.type || '';
+                        div.innerHTML = `<span class="activity-time">${time}</span> <span class="activity-tool">${tool}</span>`;
+                        list.appendChild(div);
+                    });
+                }
+            } catch (e) {}
+        }
+
+        // ─── Poll ────────────────────────────────────────────
+        setInterval(fetchStats, 3000);
+        setInterval(fetchExtendedInfo, 10000);
+        fetchStats();
+        fetchExtendedInfo();
+    </script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>J.A.R.V.I.S.</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Markdown & Code Highlighting -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+</head>
+<body>
+    <!-- Background Canvas for Arc Reactor Animation -->
+    <canvas id="reactor-canvas"></canvas>
+
+    <!-- Main Container -->
+    <div id="app">
+        <!-- Header -->
+        <header id="header">
+            <div class="logo">
+                <span class="logo-text">J.A.R.V.I.S.</span>
+                <span class="logo-sub">Just A Rather Very Intelligent System</span>
+            </div>
+            <div class="header-actions">
+                <button id="settings-btn" class="icon-btn" title="Settings">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
+                </button>
+                <button id="export-btn" class="icon-btn" title="Export Chat">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M5,20H19V18H5M19,9H15V3H9V9H5L12,16L19,9Z"/></svg>
+                </button>
+                <button id="clear-btn" class="icon-btn" title="Clear Chat">
+                    <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg>
+                </button>
+            </div>
+            <div class="status-bar">
+                <span id="status-indicator" class="status-dot online"></span>
+                <span id="status-text">ONLINE</span>
+                <span id="clock"></span>
+            </div>
+        </header>
+
+        <!-- Center Orb -->
+        <div id="orb-container">
+            <div id="orb" class="idle">
+                <div class="orb-ring ring-1"></div>
+                <div class="orb-ring ring-2"></div>
+                <div class="orb-ring ring-3"></div>
+                <div class="orb-core"></div>
+                <div class="orb-pulse"></div>
+            </div>
+            <div id="orb-label">Ready</div>
+        </div>
+
+        <!-- Chat Area -->
+        <div id="chat-container">
+            <div id="chat-messages"></div>
+        </div>
+
+        <!-- Input Area -->
+        <div id="input-area">
+            <div class="input-wrapper">
+                <input type="text" id="user-input" placeholder="Talk to J.A.R.V.I.S..." autocomplete="off">
+                <button id="send-btn" title="Send">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/></svg>
+                </button>
+                <button id="mic-btn" title="Voice Input">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg>
+                </button>
+                <button id="wake-btn" title="Toggle Wake Word (say 'Jarvis')">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M9,5A7,7 0 0,1 16,12H17A8,8 0 0,0 9,4V5M9,8A4,4 0 0,1 13,12H14A5,5 0 0,0 9,7V8M12,12A1,1 0 0,0 11,11A1,1 0 0,0 9,11A3,3 0 0,1 12,14V12M3.54,7.46L5.66,9.58C4.6,10.82 4,12.34 4,14C4,17.31 6.69,20 10,20H14V22H10A8,8 0 0,1 2,14C2,11.72 2.93,9.65 4.46,8.17L3.54,7.46Z"/></svg>
+                </button>
+                <button id="stop-btn" title="Stop Speaking" style="display:none">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M6,6H18V18H6V6Z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div id="sidebar">
+            <!-- System Stats Panel -->
+            <div id="stats-panel">
+                <div class="panel-header">SYSTEM MONITOR</div>
+                <div class="stat-item">
+                    <span class="stat-label">CPU</span>
+                    <div class="stat-bar"><div id="cpu-bar" class="stat-fill" style="width:0%"></div></div>
+                    <span id="cpu-val" class="stat-value">--%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">RAM</span>
+                    <div class="stat-bar"><div id="ram-bar" class="stat-fill" style="width:0%"></div></div>
+                    <span id="ram-val" class="stat-value">--%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">DISK</span>
+                    <div class="stat-bar"><div id="disk-bar" class="stat-fill" style="width:0%"></div></div>
+                    <span id="disk-val" class="stat-value">--%</span>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div id="quick-actions">
+                <div class="panel-header">QUICK ACTIONS</div>
+                <div class="qa-grid">
+                    <button class="qa-btn" onclick="quickAction('What is my system status?')">System</button>
+                    <button class="qa-btn" onclick="quickAction('What time is it?')">Time</button>
+                    <button class="qa-btn" onclick="quickAction('Take a screenshot')">Screen</button>
+                    <button class="qa-btn" onclick="quickAction('Check my emails')">Email</button>
+                    <button class="qa-btn" onclick="quickAction('Show network info')">Network</button>
+                    <button class="qa-btn" onclick="quickAction('Read the temperature from ESP32')">ESP32</button>
+                </div>
+            </div>
+
+            <!-- Tool Activity Feed -->
+            <div id="activity-feed">
+                <div class="panel-header">SYSTEM ACTIVITY</div>
+                <div id="feed-items"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal" style="display:none">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span>SETTINGS</span>
+                <button class="modal-close" onclick="closeSettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label class="setting-label">Language</label>
+                <select id="lang-select" class="setting-input">
+                    <option value="en">English</option>
+                    <option value="te">Telugu (తెలుగు)</option>
+                </select>
+                <label class="setting-label">TTS Voice</label>
+                <select id="voice-select" class="setting-input"></select>
+                <label class="setting-label">Audio Notifications</label>
+                <input type="checkbox" id="audio-notify" checked>
+                <label class="setting-label">Auto-speak Responses</label>
+                <input type="checkbox" id="auto-speak" checked>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wake Word Training Modal -->
+    <div id="training-modal" class="modal" style="display:none">
+        <div class="modal-content training-modal-content">
+            <div class="modal-header">
+                <span>WAKE WORD TRAINING</span>
+            </div>
+            <div class="modal-body" id="training-body">
+                <div id="training-welcome" class="training-step">
+                    <div class="training-orb">
+                        <div class="training-orb-inner"></div>
+                    </div>
+                    <h2 style="color:var(--primary);font-family:var(--font-hud);letter-spacing:2px;margin:20px 0 10px">Welcome to J.A.R.V.I.S.</h2>
+                    <p style="color:var(--text);margin-bottom:15px">I need to learn how you say my name so I can recognize your voice.</p>
+                    <p style="color:var(--primary-dim);font-size:13px;margin-bottom:20px">
+                        You'll say <strong style="color:var(--primary)">"Jarvis"</strong> 3 times so I can calibrate to your pronunciation.
+                    </p>
+                    <label class="setting-label" style="text-align:left">What should I call you?</label>
+                    <input type="text" id="train-user-name" class="setting-input" placeholder="Your name (optional)" style="margin-bottom:20px">
+                    <button id="train-begin-btn" class="train-btn">Begin Training</button>
+                    <button id="train-skip-btn" class="train-btn-secondary">Skip for now</button>
+                </div>
+
+                <div id="training-calibrate" class="training-step" style="display:none">
+                    <div class="training-orb listening">
+                        <div class="training-orb-inner"></div>
+                    </div>
+                    <h3 style="color:var(--primary)">Calibrating Microphone...</h3>
+                    <p style="color:var(--text)" id="calibrate-msg">Please stay quiet for a moment while I measure your background noise.</p>
+                    <div class="training-spinner"></div>
+                </div>
+
+                <div id="training-record" class="training-step" style="display:none">
+                    <div class="training-orb" id="record-orb">
+                        <div class="training-orb-inner"></div>
+                    </div>
+                    <h3 style="color:var(--primary)" id="record-title">Say "Jarvis"</h3>
+                    <p style="color:var(--text);font-size:22px;margin:10px 0" id="record-step">1 / 3</p>
+                    <p style="color:var(--primary-dim)" id="record-msg">Speak clearly into your microphone...</p>
+                    <p style="color:var(--secondary);font-size:14px;margin-top:10px;min-height:20px" id="record-heard"></p>
+                    <div class="training-progress">
+                        <div class="training-progress-fill" id="train-progress" style="width:0%"></div>
+                    </div>
+                </div>
+
+                <div id="training-done" class="training-step" style="display:none">
+                    <div class="training-orb success">
+                        <div class="training-orb-inner"></div>
+                    </div>
+                    <h2 style="color:var(--secondary);font-family:var(--font-hud)">Training Complete!</h2>
+                    <p style="color:var(--text);margin:15px 0" id="train-result-msg">I've learned your pronunciation.</p>
+                    <div id="train-variants" style="color:var(--primary-dim);font-size:12px;margin-bottom:20px"></div>
+                    <button id="train-finish-btn" class="train-btn">Start Using J.A.R.V.I.S.</button>
+                    <button id="train-redo-btn" class="train-btn-secondary">Redo Training</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Player (hidden) -->
+    <audio id="audio-player" style="display:none"></audio>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
